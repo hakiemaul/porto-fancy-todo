@@ -27,19 +27,21 @@ var create = function(req, res) {
 }
 
 var getOne = function(req, res) {
-  Todo.find({_id: req.body.id}, (err, todo) => {
+  Todo.find({_id: req.params.id}, (err, todo) => {
     res.send(todo)
   })
 }
 
 var update = function(req, res) {
   util.userInfo(req.body.token, function(result) {
-    Todo.findById(req.body.id, (err, todo) => {
+    Todo.findById(req.params.id, (err, todo) => {
       if(err) {
         res.send(err)
       } else {
         if(todo.creator == result.id) {
           todo.task = req.body.task;
+          todo.completed = req.body.completed;
+          todo.tags = req.body.tags;
           todo.save((err, newTodo) => {
             if(err) {
               res.send(err.errors)
@@ -55,7 +57,7 @@ var update = function(req, res) {
 
 var remove = function(req, res) {
   util.userInfo(req.body.token, function(result) {
-    Todo.findById(req.body.id, (err, todo) => {
+    Todo.findById(req.params.id, (err, todo) => {
       if(err) {
         res.send(err)
       } else {
