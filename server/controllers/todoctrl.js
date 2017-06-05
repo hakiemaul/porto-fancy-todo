@@ -11,12 +11,14 @@ var get = function(req, res) {
 
 var create = function(req, res) {
   var task = req.body.task;
+  var tags = req.body.tags.split(',');
+  tags = tags.map(tag => tag.trim());
   util.userInfo(req.body.token, function(result) {
     var newTodo = new Todo({
       task: task,
       creator: result.id,
       completed: false,
-      tags: req.body.tags
+      tags: tags
     })
     newTodo.save((err, todo) => {
       if(err) {
@@ -55,26 +57,35 @@ var update = function(req, res) {
   })
 }
 
+var toggleStatus = function(req, res) {
+  Todo.findById(req.params.id, (err, todo) => {
+    if(err) {
+      res.send(err)
+    } else {
+      todo.completed = req.body.completed;
+      todo.save((err, newTodo) => {
+        if(err) {
+          res.send(err.errors)
+        } else res.send(newTodo)
+      })
+    }
+  })
+}
+
 var remove = function(req, res) {
-  util.userInfo(req.body.token, function(result) {
-    Todo.findById(req.params.id, (err, todo) => {
-      if(err) {
-        res.send(err)
-      } else {
-        if(todo.creator == result.id) {
-          Todo.remove({_id: req.body.id}, (err, todo) => {
-            if(err) {
-              res.send(err)
-            } else res.send(todo)
-          })
-        } else {
-          res.send(todo)
-        }
-      }
-    })
+  Todo.findById(req.params.id, (err, todo) => {
+    if(err) {
+      res.send(err)
+    } else {
+      Todo.remove({_id: todo._id}, (err, todo) => {
+        if(err) {
+          res.send(err)
+        } else res.send(todo)
+      })
+    }
   })
 }
 
 module.exports = {
-  get, create, getOne, update, remove
+  get, create, getOne, update, remove, toggleStatus
 };

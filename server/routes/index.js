@@ -12,4 +12,7 @@ router.post('/fblogin', auth.loginFB)
 // Signup route
 router.post('/signup', auth.signup)
 
+//User info route
+router.post('/userinfo', auth.authUser)
+
 module.exports = router;

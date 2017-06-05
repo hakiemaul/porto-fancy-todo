@@ -1,0 +1,10 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /*border: solid .5px black;*/
+}
+
+.brand-logo {
+  height: 100%;
+}

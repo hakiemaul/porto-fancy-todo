@@ -19,10 +19,10 @@ var login = function(req, res, next) {
       bcrypt.compare(password, user.password)
       .then(result => {
         if(result) {
-          var token = jwt.sign({id: user.id, email: user.email }, sec);
+          var token = jwt.sign({id: user.id, name: user.name, email: user.email }, sec);
           res.send(token);
         } else {
-          res.send(result);
+          res.send("Wrong password");
         }
       })
       .catch(err => console.log(err))
@@ -32,28 +32,31 @@ var login = function(req, res, next) {
 
 var loginFB = function(req, res, next) {
   var email = req.body.email;
-
   User.findOne({ email: email }, function(err, user) {
     if(err) {
       res.send(err);
     } else {
-      if(user.fb_account) {
-        var token = jwt.sign({id: user.id, email: user.email }, sec);
+      if(user) {
+        var token = jwt.sign({id: user.id, name: user.name, email: user.email }, sec);
         res.send(token);
       } else {
         var salt = bcrypt.genSaltSync(saltRounds);
-        var hash = bcrypt.hashSync('accountfb', salt);
+        var hash = bcrypt.hashSync('fbaccount', salt);
 
-        var newFBUser = new User({
+        var newUser = new User({
           name: req.body.name,
           email: req.body.email,
           password: hash,
           fb_account: true
         })
-        newFBUser.save((err, user) => {
+
+        newUser.save((err, user) => {
           if(err) {
             res.send(err.errors)
-          } else res.send(user)
+          } else {
+            var token = jwt.sign({id: user.id, name: user.name, email: user.email }, sec);
+            res.send(token);
+          }
         })
       }
     }
@@ -79,13 +82,9 @@ var signup = function(req, res, next) {
 }
 
 var authUser = function(req, res, next) {
+  var token = req.body.token;
   jwt.verify(token, sec, (err, decoded) => {
-    if(decoded.id == req.params.id) {
-      req.body.token = token;
-      next()
-    } else {
-      res.send(err)
-    }
+    res.send(decoded)
   })
 }
 

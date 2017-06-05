@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Tasker</title>
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="./css/styles.css">
+    <script src="./js/vue.js"></script>
+    <script src="./js/axios.js"></script>
+    <script src="./js/jquery.js"></script>
+    <script src="./js/jqueryurl.js"></script>
+    <script src="./js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <nav class="navbar navbar-default navbar-static-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#"><img class="brand-logo"src="./images/logo.png" alt=""></a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="./index.html">Home</a></li>
+            <li><a id="logout" href="#">Logout</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+    <div id="app">
+      <div class="container">
+        <div class="row">
+          <div class="col-xs-12 col-md-6 col-md-offset-3">
+            <h1>My Personal To-Do's</h1>
+            <h4><small>Owner: {{ user.name }}</small></h4>
+            <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#createnew">Add task</button>
+            <!-- Modal -->
+            <div id="createnew" class="modal fade" role="dialog">
+              <div class="modal-dialog">
+                <!-- Modal content-->
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Create new task</h4>
+                  </div>
+                  <div class="modal-body">
+                    <form class="form-horizontal">
+                      <div class="form-group">
+                        <label class="control-label col-sm-2" for="todo"><strong>New Todo:</strong></label>
+                        <div class="col-sm-10">
+                          <input type="text" class="form-control" id="todo" placeholder="Enter new task">
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <label class="control-label col-sm-2" for="tags">Tag(s):</label>
+                        <div class="col-sm-10">
+                          <input type="text" class="form-control" id="tags" placeholder="Enter relevant tag(s), separate by comma">
+                        </div>
+                        <div class="form-group">
+                          <div class="col-sm-offset-2 col-sm-10">
+                            <button type="submit" class="btn btn-default" v-on:click="createNew()">Create</button>
+                          </div>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="content">
+              <ul id="output" class="list-group" style="margin-top: 40px;">
+                <li v-for="(task, index) in todos" class="list-group-item">
+                  <div class="row">
+                    <div class="col-md-1">
+                      <a href="#" v-if="task.completed" v-on:click="toggleStatus(task)"><span class="glyphicon glyphicon-check"></span></a>
+                      <a href="#" v-if="task.completed==false" v-on:click="toggleStatus(task)"><span class="glyphicon glyphicon-unchecked"></span></a>
+                    </div>
+                    <div class="col-md-10">
+                      <span><strong>{{ task.task }}</strong></span>
+                      <p><small>{{ (task.tags).toString() }}</small></p>
+                    </div>
+                    <div class="col-md-1">
+                      <a href="#" v-on:click="remove(task, index)"><span class="glyphicon glyphicon-trash"></span></a>
+                    </div>
+                    <div>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript">
+      var app = new Vue({
+        el: '#app',
+        data: {
+          token: localStorage.getItem("token") || '',
+          todos: [],
+          user: ''
+        },
+        created: function() {
+          this.populateTodo();
+          this.getUser();
+        },
+        methods: {
+          populateTodo: function() {
+            var self = this;
+            if(self.token.length > 0) {
+              axios.post('http://localhost:3000/api/todos', {
+                token: self.token
+              })
+              .then(response => {
+                self.todos = response.data;
+              })
+              .catch(err => {
+
+              })
+            } else {
+              window.location.href = "./login.html";
+            }
+          },
+          getUser: function() {
+            var self = this;
+            axios.post('http://localhost:3000/userinfo', {
+              token: self.token
+            })
+            .then(response => {
+              console.log(response.data)
+              self.user = response.data;
+            })
+            .catch(err => {
+
+            })
+          },
+          createNew: function() {
+            var self = this;
+            var task = $('#todo').val()
+            var tags = $('#tags').val()
+            axios.post('http://localhost:3000/api/todos/add', {
+              task: task,
+              tags: tags,
+              token: self.token
+            })
+            .then(response => {
+              window.location.href = "./index.html";
+            })
+            .catch(err => {
+
+            })
+          },
+          toggleStatus: function(todo) {
+            var value = !todo.completed;
+            todo.completed = value;
+            axios.put(`http://localhost:3000/api/todos/${todo._id}/toggle`, {
+              completed: value
+            })
+            .then(response => {
+            })
+          },
+          remove: function(todo, index) {
+            if(window.confirm("Remove this item?")) {
+              app.todos.splice(index, 1)
+              axios.delete(`http://localhost:3000/api/todos/${todo._id}`, {
+                data: {
+                  _id: todo._id
+                }
+              })
+            }
+          }
+        }
+      })
+      $(document).ready(function() {
+        $('#logout').click(function(event) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("cart");
+          window.location.href = "./index.html";
+        })
+      })
+    </script>
+  </body>
+</html>

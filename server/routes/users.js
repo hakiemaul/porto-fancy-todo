@@ -5,10 +5,10 @@ var auth = require('../controllers/auth');
 var userctrl = require('../controllers/userctrl');
 
 // Route to get all user
-router.get('/', auth.allUser, userctrl.get);
+router.get('/', userctrl.get);
 
 // Route to create new user
-router.post('/', auth.allUser, userctrl.create);
+router.post('/', userctrl.create);
 
 // Route to get one user
 router.get('/:id', auth.authUser, userctrl.getOne);

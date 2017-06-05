@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Tasker</title>
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="./css/styles.css">
+    <script src="./js/vue.js"></script>
+    <script src="./js/axios.js"></script>
+    <script src="./js/jquery.js"></script>
+    <script src="./js/jqueryurl.js"></script>
+    <script src="./js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <div id="fb-root"></div>
+    <script src="./js/facebook.js" charset="utf-8"></script>
+    <nav class="navbar navbar-default navbar-static-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#"><img class="brand-logo"src="./images/logo.png" alt=""></a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="./index.html">Home</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+    <div class="container">
+    	<div class="row">
+    		<div class="col-xs-8 col-xs-offset-2">
+          <div id="tabs">
+            <ul class="nav nav-pills">
+        			<li class="active">
+                <a  href="#register" data-toggle="tab">Daftar</a>
+        			</li>
+        			<li><a href="#login" data-toggle="tab">Masuk</a>
+        			</li>
+        		</ul>
+      			<div class="tab-content clearfix">
+      			  <div class="tab-pane active" id="register">
+                <div class="panel panel-default">
+          				<div class="panel-body">
+          					<div class="row">
+                      <div class="col-xs-12">
+                        <form method="post">
+                          <div class="form-group">
+                            <label for="name">Nama</label>
+                            <input type="text" class="form-control" id="name" placeholder="Masukkan nama anda">
+                          </div>
+                          <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" id="email" placeholder="Email anda">
+                          </div>
+                          <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" id="password" placeholder="Password anda">
+                          </div>
+                        </form>
+                      </div>
+          					</div>
+            				<div class="panel-footer">
+            					<div class="row text-center">
+            						<div class="col-xs-3">
+                          <a href="#" id="create" class="btn btn-success btn-block" role="button">Daftar</a>
+            						</div>
+                        <div class="col-xs-1">
+                          atau
+                        </div>
+                        <div class="col-xs-3">
+                          <div id="fb-login" class="fb-login-button" data-max-rows="1" data-size="large" data-button-type="login_with" data-show-faces="false" data-auto-logout-link="true" data-use-continue-as="true"></div>
+                        </div>
+                        <div id="result" class="col-xs-5">
+                        </div>
+            					</div>
+            				</div>
+          			  </div>
+                </div>
+      				</div>
+      				<div class="tab-pane" id="login">
+                <div class="panel panel-default">
+          				<div class="panel-body">
+          					<div class="row">
+                      <div class="col-xs-12">
+                        <form method="post">
+                          <div class="form-group">
+                            <label for="email-login">Email</label>
+                            <input type="text" class="form-control" id="email-login" placeholder="Email anda">
+                          </div>
+                          <div class="form-group">
+                            <label for="password-login">Password</label>
+                            <input type="password" class="form-control" id="password-login" placeholder="Password anda">
+                          </div>
+                        </form>
+                      </div>
+          					</div>
+            				<div class="panel-footer">
+            					<div class="row text-center">
+                        <div id="login-result" class="col-xs-9">
+                        </div>
+            						<div class="col-xs-3">
+                          <a href="#" id="login-button" class="btn btn-success btn-block" role="button">Masuk</a>
+            						</div>
+            					</div>
+            				</div>
+          			  </div>
+                </div>
+      				</div>
+      			</div>
+          </div>
+
+    		</div>
+    	</div>
+    </div>
+    <script type="text/javascript">
+    $(document).ready(function() {
+      $('#result').empty()
+      $('#create').click(function(event) {
+        var name = $('#name').val();
+        var email = $('#email').val();
+        var password = $('#password').val();
+        console.log('masuk')
+        axios.post('http://localhost:3000/signup', {
+          name: name,
+          email: email,
+          password: password
+        })
+        .then(function (response) {
+          $('#name').val(this.placeholder);
+          $('#email').val(this.placeholder);
+          $('#password').val(this.placeholder);
+          if(response.data.email == email) {
+            $('#result').append("<p>Akun berhasil dibuat. Login <a href=#login>disini</a> </p>")
+          } else {
+            console.log(response.data)
+          }
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+      })
+      $('#login-button').click(function(event) {
+        $('#login-result').empty()
+        var email = $('#email-login').val();
+        var password = $('#password-login').val();
+        axios.post('http://localhost:3000/login', {
+          email: email,
+          password: password
+        })
+        .then(function (response) {
+          $('#email-login').val(this.placeholder);
+          $('#password-login').val(this.placeholder);
+          if(response.data.length < 25) {
+            $('#login-result').append(`<p style="color: red">${response.data}</p>`)
+          } else {
+            localStorage.setItem("token", response.data);
+            setInterval(window.location.href = "./index.html", 2000)
+          }
+
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+      })
+    })
+    </script>
+  </body>
+</html>
