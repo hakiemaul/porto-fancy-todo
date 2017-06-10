@@ -6,29 +6,41 @@
   fjs.parentNode.insertBefore(js, fjs);
 }(document, 'script', 'facebook-jssdk'));
 
-window.fbAsyncInit = function() {
-FB.init({
-  appId      : 469306980082723,
-  cookie     : true,  // enable cookies to allow the server to access
-                      // the session
-  xfbml      : true,  // parse social plugins on this page
-  version    : 'v2.9' // use graph api version 2.8
-});
-FB.getLoginStatus(function(response) {
-  statusChangeCallback(response);
-});
-}
-
 function statusChangeCallback(response) {
   console.log('statusChangeCallback');
   if (response.status === 'connected') {
     testAPI();
+  } else {
+    FB.login(function(response) {
+      if (response.authResponse) {
+       console.log('Welcome!  Fetching your information.... ');
+       FB.api('/me', function(response) {
+         console.log('Good to see you, ' + response.name + '.');
+       });
+      } else {
+       console.log('User cancelled login or did not fully authorize.');
+      }
+    });
   }
 }
 
 function checkLoginState() {
   FB.getLoginStatus(function(response) {
-    statusChangeCallback(response);
+    statusChangeCallback(response)
+  });
+}
+
+function logoutFacebook() {
+  FB.getLoginStatus(function(response) {
+    if(response.status == 'connected') {
+      FB.logout(function(response) {
+        localStorage.removeItem("token");
+        console.log(response);
+      });
+    } else {
+      localStorage.removeItem("token");
+    }
+    window.location.href = '/login.html'
   });
 }
 
@@ -39,9 +51,8 @@ function testAPI() {
       name : response.name
     })
     .then((result)=>{
-      console.log(result)
       localStorage.setItem('token', result.data);
-      $('#result').append("<p>Berhasil login melalui facebook. <a href=\"./index.html\">Ke halaman utama</a> </p>")
+      window.location.href = './index.html'
     })
     .catch((err)=>{
       console.log(err)

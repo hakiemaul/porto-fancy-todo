@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <title>Tasker</title>
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
     <link rel="stylesheet" href="./css/bootstrap.min.css">
     <link rel="stylesheet" href="./css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="./css/styles.css">
@@ -11,6 +12,7 @@
     <script src="./js/jquery.js"></script>
     <script src="./js/jqueryurl.js"></script>
     <script src="./js/bootstrap.min.js"></script>
+    <script src="./js/facebook.js" charset="utf-8"></script>
   </head>
   <body>
     <nav class="navbar navbar-default navbar-static-top">
@@ -25,6 +27,9 @@
           <a class="navbar-brand" href="#"><img class="brand-logo"src="./images/logo.png" alt=""></a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-left">
+            <li><h4 class="navbar-text">Tasker</h4></li>
+          </ul>
           <ul class="nav navbar-nav navbar-right">
             <li><a href="./index.html">Home</a></li>
             <li><a id="logout" href="#">Logout</a></li>
@@ -38,7 +43,19 @@
           <div class="col-xs-12 col-md-6 col-md-offset-3">
             <h1>My Personal To-Do's</h1>
             <h4><small>Owner: {{ user.name }}</small></h4>
-            <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#createnew">Add task</button>
+            <div class="row">
+              <div class="col-md-3">
+                <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#createnew">Add task</button>
+              </div>
+              <div class="col-md-7 col-md-offset-2">
+                <form class="form-inline">
+                  <div class="form-group">
+                    <input v-on:submit="searchTag" type="text" class="form-control" placeholder="search by tag.." v-model="search">
+                  </div>
+                  <button type="button" class="btn btn-success" @click="searchTag">Search</button>
+                </form>
+              </div>
+            </div>
             <!-- Modal -->
             <div id="createnew" class="modal fade" role="dialog">
               <div class="modal-dialog">
@@ -53,17 +70,17 @@
                       <div class="form-group">
                         <label class="control-label col-sm-2" for="todo"><strong>New Todo:</strong></label>
                         <div class="col-sm-10">
-                          <input type="text" class="form-control" id="todo" placeholder="Enter new task">
+                          <input type="text" class="form-control" v-model="todo" placeholder="Enter new task">
                         </div>
                       </div>
                       <div class="form-group">
                         <label class="control-label col-sm-2" for="tags">Tag(s):</label>
                         <div class="col-sm-10">
-                          <input type="text" class="form-control" id="tags" placeholder="Enter relevant tag(s), separate by comma">
+                          <input type="text" class="form-control" v-model="tags" placeholder="Enter relevant tag(s), separate by comma">
                         </div>
                         <div class="form-group">
                           <div class="col-sm-offset-2 col-sm-10">
-                            <button type="submit" class="btn btn-default" v-on:click="createNew()">Create</button>
+                            <button type="submit" class="btn btn-default" v-on:click="createNew()" data-dismiss="modal">Create</button>
                           </div>
                         </div>
                       </div>
@@ -79,21 +96,22 @@
               <ul id="output" class="list-group" style="margin-top: 40px;">
                 <li v-for="(task, index) in todos" class="list-group-item">
                   <div class="row">
-                    <div class="col-md-1">
-                      <a href="#" v-if="task.completed" v-on:click="toggleStatus(task)"><span class="glyphicon glyphicon-check"></span></a>
-                      <a href="#" v-if="task.completed==false" v-on:click="toggleStatus(task)"><span class="glyphicon glyphicon-unchecked"></span></a>
+                    <div class="col-xs-1">
+                      <a v-if="task.completed" v-on:click="toggleStatus(task)"><span class="glyphicon glyphicon-check"></span></a>
+                      <a v-if="task.completed==false" v-on:click="toggleStatus(task)"><span class="glyphicon glyphicon-unchecked"></span></a>
                     </div>
-                    <div class="col-md-10">
-                      <span><strong>{{ task.task }}</strong></span>
+                    <div class="col-xs-10">
+                      <span style="font-size: 20px; margin-top: 0; line-height: 1.5em"><strong>{{ task.task }}</strong></span>
                       <p><small>{{ (task.tags).toString() }}</small></p>
                     </div>
-                    <div class="col-md-1">
-                      <a href="#" v-on:click="remove(task, index)"><span class="glyphicon glyphicon-trash"></span></a>
+                    <div class="col-xs-1">
+                      <a v-on:click="remove(task, index)"><span class="glyphicon glyphicon-trash"></span></a>
                     </div>
                     <div>
                     </div>
                   </div>
                 </li>
+                <button v-if="getSearch" @click="populateTodo" type="button" class="btn btn-primary btn-block">Back to all task</button>
               </ul>
             </div>
           </div>
@@ -106,7 +124,11 @@
         data: {
           token: localStorage.getItem("token") || '',
           todos: [],
-          user: ''
+          user: '',
+          todo: '',
+          tags: '',
+          search: '',
+          getSearch: false
         },
         created: function() {
           this.populateTodo();
@@ -121,6 +143,7 @@
               })
               .then(response => {
                 self.todos = response.data;
+                self.getSearch = false
               })
               .catch(err => {
 
@@ -135,7 +158,6 @@
               token: self.token
             })
             .then(response => {
-              console.log(response.data)
               self.user = response.data;
             })
             .catch(err => {
@@ -144,15 +166,15 @@
           },
           createNew: function() {
             var self = this;
-            var task = $('#todo').val()
-            var tags = $('#tags').val()
             axios.post('http://localhost:3000/api/todos/add', {
-              task: task,
-              tags: tags,
+              task: self.todo,
+              tags: self.tags,
               token: self.token
             })
             .then(response => {
-              window.location.href = "./index.html";
+              self.todo = ''
+              self.tags = ''
+              self.populateTodo()
             })
             .catch(err => {
 
@@ -176,14 +198,40 @@
                 }
               })
             }
+          },
+          searchTag: function(e) {
+            e.preventDefault()
+            console.log('tes');
+            let result = []
+            if(this.search.length > 0) {
+              this.todos.forEach(todo => {
+                if(todo.tags.includes(this.search)) {
+                  result.push(todo)
+                }
+              })
+              this.getSearch = true
+            } else {
+              this.populateTodo()
+            }
+            this.todos = result
+            this.search = ''
           }
         }
       })
       $(document).ready(function() {
         $('#logout').click(function(event) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("cart");
-          window.location.href = "./index.html";
+          FB.init({
+            appId      : 469306980082723,
+            cookie     : true,  // enable cookies to allow the server to access
+                                // the session
+            xfbml      : true,  // parse social plugins on this page
+            version    : 'v2.9' // use graph api version 2.8
+          });
+          FB.getLoginStatus(function(response) {
+            logoutFacebook();
+          });
+          // localStorage.removeItem("token");
+          // window.location.href = "./login.html";
         })
       })
     </script>
